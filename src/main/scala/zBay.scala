@@ -1,4 +1,5 @@
 import akka.actor.{ActorRef, Props, Actor}
+import akka.routing.FromConfig
 import org.joda.time.DateTime
 
 class zBay extends Actor {
@@ -8,7 +9,7 @@ class zBay extends Actor {
   var apiActor: ActorRef = _
 
   override def preStart() {
-    apiActor = context.actorOf(Props[API])
+    apiActor = context.actorOf(Props[API].withRouter(FromConfig()), "api")
   }
 
   def receive = {

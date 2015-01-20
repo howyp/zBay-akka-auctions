@@ -32,11 +32,6 @@ class AuctionSpec extends ActorSpec {
       auction ! Bid(0.50, user)
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
     }
-    "be biddable by IDs" in {
-      api ! AuctionBidRequest(auctionId = 1, userId = 1, value = 1.00)
-      auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
-      user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
-    }
   }
 
   val auction = TestActorRef(new Auction(exampleEndTime), "auction1")

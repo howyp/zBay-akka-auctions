@@ -17,8 +17,9 @@ class Auction(endTime: DateTime) extends Actor {
 
   val runningBehaviour: Receive = {
     case StatusRequest    => sender ! StatusResponse(currentHighestBid, Running)
-    case Bid(value, from) => currentHighestBid = currentHighestBid max value
-                             from ! BidOnNotification(self)
+    case Bid(value, bidder) => currentHighestBid = currentHighestBid max value
+                               bidder ! BidOnNotification(self)
+                               sender ! BidAccepted
     case EndNotification  => context.become(endedBehaviour)
   }
 
@@ -34,6 +35,7 @@ object Auction {
     case object StatusRequest
     case class StatusResponse(currentHighestBid: BigDecimal, state: State)
     case class Bid(value: BigDecimal, from: ActorRef)
+    case object BidAccepted
     case object EndNotification
 
     sealed trait State

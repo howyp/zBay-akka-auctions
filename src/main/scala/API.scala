@@ -13,6 +13,6 @@ class API extends Actor {
       auctionActorFor(auctionId).tell(StatusRequest, sender)
   }
 
-  def userActorFor(userId: Long) = context.actorFor(s"../user$userId")
-  def auctionActorFor(auctionId: Long) = context.actorSelection(s"../auction$auctionId")
+  def userActorFor(userId: Long) = context.actorFor(s"../../user$userId")
+  def auctionActorFor(auctionId: Long) = context.actorSelection(s"../../auction$auctionId")
 }
