@@ -1,17 +1,10 @@
-import akka.actor.ActorSystem
-import akka.pattern._
-import akka.testkit.TestActorRef
-import org.specs2.mutable.Specification
-import akka.util.Timeout
-import java.util.concurrent.TimeUnit
-import org.specs2.time.NoTimeConversions
 import Auction.Protocol._
 import User.Protocol._
-import API.Protocol._
-import org.joda.time.DateTime
+import akka.pattern._
+import akka.testkit.TestActorRef
+import zBay.Protocol._
 
-class AuctionSpec extends Specification
-                     with NoTimeConversions { isolated
+class AuctionSpec extends ActorSpec {
   "An auction" should {
     "be able to describe itself after it has been started" in {
       auction ? StatusRequest must be_==(StatusResponse(0.00, Running)).await
@@ -40,16 +33,11 @@ class AuctionSpec extends Specification
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
     }
     "be biddable by IDs" in {
-      api ! BidRequest(auctionId = 1, userId = 1, value = 1.00)
+      api ! AuctionBidRequest(auctionId = 1, userId = 1, value = 1.00)
       auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
     }
   }
-
-  implicit val system = ActorSystem()
-  implicit val timeout = Timeout(3, TimeUnit.SECONDS)
-
-  val exampleEndTime = DateTime.now.plusDays(7)
 
   val auction = TestActorRef(new Auction(exampleEndTime), "auction1")
   val user = TestActorRef(new User, "user1")
