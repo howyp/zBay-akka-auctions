@@ -21,6 +21,7 @@ class Auction(endTime: DateTime) extends Actor {
                                bidder ! BidOnNotification(self)
                                sender ! BidAccepted
     case EndNotification  => context.become(endedBehaviour)
+    case DetailsRequest   => sender ! DetailsResponse(endTime)
   }
 
   val endedBehaviour: Receive = {
@@ -34,8 +35,13 @@ object Auction {
   object Protocol {
     case object StatusRequest
     case class StatusResponse(currentHighestBid: BigDecimal, state: State)
+
+    case object DetailsRequest
+    case class DetailsResponse(endTime: DateTime)
+
     case class Bid(value: BigDecimal, from: ActorRef)
     case object BidAccepted
+
     case object EndNotification
 
     sealed trait State
