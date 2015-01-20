@@ -27,6 +27,12 @@ class AuctionSpec extends Specification
       auction ! EndNotification
       auction ? StatusRequest must be_==(StatusResponse(0, Ended)).await
     }
+    "ignore bids after auction finish" in {
+      auction ! Bid(0.50)
+      auction ! EndNotification
+      auction ! Bid(1.00)
+      auction ? StatusRequest must be_==(StatusResponse(0.50, Ended)).await
+    }
   }
 
   implicit val system = ActorSystem()

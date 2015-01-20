@@ -10,15 +10,21 @@ class Auction(endTime: DateTime) extends Actor {
   var currentHighestBid = BigDecimal(0)
   var currentStatus: State = Running
 
-  context.system.scheduler.scheduleOnce(atEndTime(), self, EndNotification)(context.system.dispatcher)
+  context.system.scheduler.scheduleOnce(atEndTime, self, EndNotification)(context.system.dispatcher)
 
-  def receive = {
-    case StatusRequest   => sender ! StatusResponse(currentHighestBid, currentStatus)
+  def receive = runningBehaviour
+
+  val runningBehaviour: Receive = {
+    case StatusRequest   => sender ! StatusResponse(currentHighestBid, Running)
     case Bid(value)      => currentHighestBid = currentHighestBid max value
-    case EndNotification => currentStatus = Ended
+    case EndNotification => context.become(endedBehaviour)
   }
 
-  def atEndTime() = FiniteDuration(new Interval(now, endTime).toDurationMillis, TimeUnit.MILLISECONDS)
+  val endedBehaviour: Receive = {
+    case StatusRequest   => sender ! StatusResponse(currentHighestBid, Ended)
+  }
+
+  def atEndTime = FiniteDuration(new Interval(now, endTime).toDurationMillis, TimeUnit.MILLISECONDS)
 }
 
 object Auction {
