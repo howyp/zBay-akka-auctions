@@ -1,4 +1,4 @@
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
 import org.joda.time.{Interval, DateTime}
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
@@ -6,6 +6,7 @@ import DateTime.now
 
 class Auction(endTime: DateTime) extends Actor {
   import Auction.Protocol._
+  import User.Protocol.BidOnNotification
 
   var currentHighestBid = BigDecimal(0)
   var currentStatus: State = Running
@@ -15,9 +16,10 @@ class Auction(endTime: DateTime) extends Actor {
   def receive = runningBehaviour
 
   val runningBehaviour: Receive = {
-    case StatusRequest   => sender ! StatusResponse(currentHighestBid, Running)
-    case Bid(value)      => currentHighestBid = currentHighestBid max value
-    case EndNotification => context.become(endedBehaviour)
+    case StatusRequest    => sender ! StatusResponse(currentHighestBid, Running)
+    case Bid(value, from) => currentHighestBid = currentHighestBid max value
+                             from ! BidOnNotification(self)
+    case EndNotification  => context.become(endedBehaviour)
   }
 
   val endedBehaviour: Receive = {
@@ -31,7 +33,7 @@ object Auction {
   object Protocol {
     case object StatusRequest
     case class StatusResponse(currentHighestBid: BigDecimal, state: State)
-    case class Bid(value: BigDecimal)
+    case class Bid(value: BigDecimal, from: ActorRef)
     case object EndNotification
 
     sealed trait State

@@ -6,6 +6,7 @@ import akka.util.Timeout
 import java.util.concurrent.TimeUnit
 import org.specs2.time.NoTimeConversions
 import Auction.Protocol._
+import User.Protocol._
 import org.joda.time.DateTime
 
 class AuctionSpec extends Specification
@@ -15,12 +16,12 @@ class AuctionSpec extends Specification
       auction ? StatusRequest must be_==(StatusResponse(0.00, Running)).await
     }
     "accept a bid and update the current bid amount" in {
-      auction ! Bid(1.00)
+      auction ! Bid(1.00, user)
       auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
     }
     "not accept a bid for lower than the current highest" in {
-      auction ! Bid(1.00)
-      auction ! Bid(0.99)
+      auction ! Bid(1.00, user)
+      auction ! Bid(0.99, user)
       auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
     }
     "be able to tell if auction has finished" in {
@@ -28,10 +29,14 @@ class AuctionSpec extends Specification
       auction ? StatusRequest must be_==(StatusResponse(0, Ended)).await
     }
     "ignore bids after auction finish" in {
-      auction ! Bid(0.50)
+      auction ! Bid(0.50, user)
       auction ! EndNotification
-      auction ! Bid(1.00)
+      auction ! Bid(1.00, user)
       auction ? StatusRequest must be_==(StatusResponse(0.50, Ended)).await
+    }
+    "tell the user actor that the bid was received" in {
+      auction ! Bid(0.50, user)
+      user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
     }
   }
 
@@ -41,4 +46,5 @@ class AuctionSpec extends Specification
   val exampleEndTime = DateTime.now.plusDays(7)
 
   lazy val auction = TestActorRef(new Auction(exampleEndTime))
+  lazy val user = TestActorRef(new User)
 }
