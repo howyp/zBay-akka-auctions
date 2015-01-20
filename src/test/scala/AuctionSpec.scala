@@ -1,8 +1,8 @@
 import Auction.Protocol._
+import Auction._
 import User.Protocol._
 import akka.pattern._
 import akka.testkit.TestActorRef
-import zBay.Protocol._
 
 class AuctionSpec extends ActorSpec {
   "An auction" should {
@@ -19,18 +19,23 @@ class AuctionSpec extends ActorSpec {
       auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
     }
     "be able to tell if auction has finished" in {
+      auction ! Bid(0.50, user)
       auction ! EndNotification
-      auction ? StatusRequest must be_==(StatusResponse(0, Ended)).await
+      auction ? StatusRequest must be_==(StatusResponse(0.50, Sold)).await
     }
     "ignore bids after auction finish" in {
       auction ! Bid(0.50, user)
       auction ! EndNotification
       auction ! Bid(1.00, user)
-      auction ? StatusRequest must be_==(StatusResponse(0.50, Ended)).await
+      auction ? StatusRequest must be_==(StatusResponse(0.50, Sold)).await
     }
     "tell the user actor that the bid was received" in {
       auction ! Bid(0.50, user)
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
+    }
+    "be not won if no bids placed" in {
+      auction ! EndNotification
+      auction ? StatusRequest must be_==(StatusResponse(0, NotSold)).await
     }
   }
 

@@ -1,4 +1,5 @@
 import Auction.Protocol._
+import Auction.Running
 import akka.actor.Props
 import akka.pattern._
 import org.joda.time.DateTime
