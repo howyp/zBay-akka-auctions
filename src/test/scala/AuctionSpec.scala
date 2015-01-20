@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 import org.specs2.time.NoTimeConversions
 import Auction.Protocol._
 import User.Protocol._
+import API.Protocol._
 import org.joda.time.DateTime
 
 class AuctionSpec extends Specification
@@ -38,6 +39,11 @@ class AuctionSpec extends Specification
       auction ! Bid(0.50, user)
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
     }
+    "be biddable by IDs" in {
+      api ! BidRequest(auctionId = 1, userId = 1, value = 1.00)
+      auction ? StatusRequest must be_==(StatusResponse(1.00, Running)).await
+      user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Seq(auction))).await
+    }
   }
 
   implicit val system = ActorSystem()
@@ -45,6 +51,7 @@ class AuctionSpec extends Specification
 
   val exampleEndTime = DateTime.now.plusDays(7)
 
-  lazy val auction = TestActorRef(new Auction(exampleEndTime))
-  lazy val user = TestActorRef(new User)
+  val auction = TestActorRef(new Auction(exampleEndTime), "auction1")
+  val user = TestActorRef(new User, "user1")
+  val api = TestActorRef(new API)
 }
