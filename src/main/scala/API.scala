@@ -22,15 +22,13 @@ class API extends Actor {
     case AuctionStatusRequest(auctionId) =>
       auctionActorFor(auctionId).tell(StatusRequest, sender)
 
-    case Query(expectedEndTime, currentAuctionIds) =>
+    case QueryRequest(expectedEndTime, currentAuctionIds) =>
       val auctionIds: Set[Future[Option[Long]]] = currentAuctionIds.map { auctionId =>
         (auctionActorFor(auctionId) ? DetailsRequest).map {
-          case DetailsResponse(t) if t == expectedEndTime => Some(auctionId)
-          case _                                          => None
+          case DetailsResponse(t) => if (t == expectedEndTime) Some(auctionId) else None
         }
       }
-      val sequencedAuctionIds: Future[Set[Long]] = Future.sequence(auctionIds).map(_.flatten)
-      sequencedAuctionIds.map(AuctionQueryResponse(_)).pipeTo(sender)
+      Future.sequence(auctionIds).map(_.flatten).map(QueryResponse(_)).pipeTo(sender)
   }
 
   def userActorFor(userId: Long) = context.actorFor(s"../../user$userId")
@@ -38,6 +36,7 @@ class API extends Actor {
 }
 object API {
   object Protocol {
-    case class Query(endTime: DateTime, currentAuctions: Set[Long])
+    case class QueryRequest(endTime: DateTime, currentAuctions: Set[Long])
+    case class QueryResponse(matchingAuctions: Set[Long])
   }
 }

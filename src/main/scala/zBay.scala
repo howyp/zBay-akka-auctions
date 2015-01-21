@@ -1,5 +1,9 @@
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorRef, Props, Actor}
+import akka.pattern._
 import akka.routing.FromConfig
+import akka.util.Timeout
 import org.joda.time.DateTime
 
 class zBay extends Actor {
@@ -10,6 +14,9 @@ class zBay extends Actor {
   var apiActor: ActorRef = _
   var liveAuctions = Set[Long]()
 
+  implicit val timeout = Timeout(10, TimeUnit.SECONDS)
+  implicit val ec = context.dispatcher
+
   override def preStart() {
     apiActor = context.actorOf(Props[API].withRouter(FromConfig()), "api")
   }
@@ -18,7 +25,9 @@ class zBay extends Actor {
     case AuctionCreateRequest(endTime)  => createAuction(endTime)
     case rq@ ( _: AuctionBidRequest
              | _: AuctionStatusRequest) => apiActor.forward(rq)
-    case AuctionQueryRequest(endTime)   => apiActor.tell(Query(endTime, liveAuctions), sender)
+    case AuctionQueryRequest(endTime)   => apiActor.ask(QueryRequest(endTime, liveAuctions)).map {
+      case QueryResponse(ids) => AuctionQueryResponse(ids)
+    }.pipeTo(sender)
   }
 
   def createAuction(endTime: DateTime) = {
