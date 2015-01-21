@@ -6,21 +6,21 @@ import akka.util.Timeout
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
+import scala.math.BigDecimal
 
 class API extends Actor {
-  import Auction.Protocol._
+  import Auction.Protocol.{Bid, DetailsRequest, DetailsResponse}
   import API.Protocol._
-  import zBay.Protocol._
 
   implicit val timeout = Timeout(10, TimeUnit.SECONDS)
   implicit val ec = context.dispatcher
 
   def receive = {
-    case AuctionBidRequest(auctionId, userId, value) =>
+    case BidRequest(auctionId, userId, value) =>
       auctionActorFor(auctionId).tell(Bid(value, userActorFor(userId)), sender)
 
-    case AuctionStatusRequest(auctionId) =>
-      auctionActorFor(auctionId).tell(StatusRequest, sender)
+    case StatusRequest(auctionId) =>
+      auctionActorFor(auctionId).tell(Auction.Protocol.StatusRequest, sender)
 
     case QueryRequest(expectedEndTime, currentAuctionIds) =>
       val auctionIds: Set[Future[Option[Long]]] = currentAuctionIds.map { auctionId =>
@@ -36,6 +36,8 @@ class API extends Actor {
 }
 object API {
   object Protocol {
+    case class BidRequest(auctionId: Long, userId: Long, value: BigDecimal)
+    case class StatusRequest(auctionId: Long)
     case class QueryRequest(endTime: DateTime, currentAuctions: Set[Long])
     case class QueryResponse(matchingAuctions: Set[Long])
   }

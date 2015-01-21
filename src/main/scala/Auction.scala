@@ -6,29 +6,37 @@ import DateTime.now
 
 import scala.math.BigDecimal
 
-class Auction(endTime: DateTime) extends Actor with FSM[Auction.State, BigDecimal] {
+class Auction(endTime: DateTime) extends Actor with FSM[Auction.Lifecycle, AuctionValue] {
   import Auction.Protocol._
-  import Auction._
+  import Auction.Lifecycle._
+  import AuctionValue._
   import User.Protocol.BidOnNotification
 
   context.system.scheduler.scheduleOnce(atEndTime, self, EndNotification)(context.system.dispatcher)
 
-  val NoBid = BigDecimal(0)
-  startWith(Running, NoBid)
+  startWith(New, NotSold)
 
-  when(Running) { respondToStatusRequestAs(Running) orElse {
-    case Event(Bid(value, from), highestBid) => from ! BidOnNotification(self)
-                                                stay using (highestBid max value) replying BidAccepted
-    case Event(EndNotification,  NoBid)      => goto (NotSold)
-    case Event(EndNotification,  _)          => goto (Sold)
-    case Event(DetailsRequest,   _)          => stay replying DetailsResponse(endTime)
-  }}
+  when(New) {
+    case Event(Bid(value, from), NotSold) =>
+      from ! BidOnNotification(self)
+      goto (Active) using Sold(value) replying BidStatus.Accepted
+  }
 
-  when(Sold){ respondToStatusRequestAs(Sold) }
-  when(NotSold){ respondToStatusRequestAs(NotSold) }
+  when(Active) {
+    case Event(Bid(value, from), Sold(highestBid)) =>
+      from ! BidOnNotification(self)
+      stay using Sold(highestBid max value) replying BidStatus.Accepted
+  }
 
-  def respondToStatusRequestAs(state: Auction.State): StateFunction = {
-    case Event(StatusRequest, winningBid) => stay replying StatusResponse(winningBid, state)
+  when(Closed) {
+    case Event(Bid(_, _), _) =>
+      stay replying BidStatus.Rejected
+  }
+
+  whenUnhandled {
+    case Event(DetailsRequest,   _)  => stay replying DetailsResponse(endTime)
+    case Event(EndNotification,  _)  => goto (Closed)
+    case Event(StatusRequest, value) => stay replying value
   }
 
   def atEndTime = FiniteDuration(new Interval(now, endTime).toDurationMillis, TimeUnit.MILLISECONDS)
@@ -37,19 +45,20 @@ class Auction(endTime: DateTime) extends Actor with FSM[Auction.State, BigDecima
 object Auction {
   object Protocol {
     case object StatusRequest
-    case class StatusResponse(currentHighestBid: BigDecimal, state: State)
+    case class StatusResponse(currentHighestBid: BigDecimal, state: AuctionValue)
 
     case object DetailsRequest
     case class DetailsResponse(endTime: DateTime)
 
     case class Bid(value: BigDecimal, from: ActorRef)
-    case object BidAccepted
 
     case object EndNotification
   }
 
-  sealed trait State
-  case object Running extends State
-  case object Sold extends State
-  case object NotSold extends State
+  trait Lifecycle
+  object Lifecycle {
+    case object New extends Lifecycle
+    case object Active extends Lifecycle
+    case object Closed extends Lifecycle
+  }
 }

@@ -1,24 +1,21 @@
-import Auction.Protocol._
-import Auction.Running
-import akka.actor.Props
-import akka.pattern._
+import AuctionValue.Sold
+import akka.actor.{TypedActor, TypedProps}
 import org.joda.time.DateTime
-import zBay.Protocol._
 
 import scala.concurrent.Await.result
 
 class zBaySpec extends ActorSpec {
   "The zBay" should {
     "be able to handle bids and return an auctions status" in {
-      val auctionId = result(zBay ? AuctionCreateRequest(exampleEndTime), timeoutDuration).asInstanceOf[Long]
-      result(zBay ? AuctionBidRequest(auctionId, userId = 1, value = 1.00), timeoutDuration)
-      zBay ? AuctionStatusRequest(auctionId) must be_==(StatusResponse(1.00, Running)).await
+      val auctionId = zBay.createAuction(exampleEndTime)
+      result(zBay.placeBid(auctionId, userId = 1, value = 1.00), timeoutDuration)
+      zBay.status(auctionId) must be_==(Sold(1.00)).await
     }
     "be able to query for auctions by date" in {
-      val auctionId1 = result(zBay ? AuctionCreateRequest(twoDaysTime), timeoutDuration).asInstanceOf[Long]
-      val auctionId2 = result(zBay ? AuctionCreateRequest(tomorrow), timeoutDuration).asInstanceOf[Long]
-      val auctionId3 = result(zBay ? AuctionCreateRequest(tomorrow), timeoutDuration).asInstanceOf[Long]
-      zBay ? AuctionQueryRequest(tomorrow) must be_==(AuctionQueryResponse(Set(auctionId2, auctionId3))).await
+      val auctionId1 = zBay.createAuction(twoDaysTime)
+      val auctionId2 = zBay.createAuction(tomorrow)
+      val auctionId3 = zBay.createAuction(tomorrow)
+      zBay.find(tomorrow) must be_==(Set(auctionId2, auctionId3)).await
     }
   }
 
@@ -32,5 +29,5 @@ class zBaySpec extends ActorSpec {
                  |    nr-of-instances = 5
                  |  }
                  |}""".stripMargin
-  lazy val zBay = system.actorOf(Props[zBay], "zBay")
+  lazy val zBay: zBay = TypedActor(system).typedActorOf(TypedProps[zBayTypedActor](), "zBay")
 }
