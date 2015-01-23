@@ -8,10 +8,11 @@ class UserSpec extends ActorSpec {
       user ? ListAuctionsRequest must be_==(ListAuctionsResponse(Nil)).await
     }
     "list auctions bid on" in {
-      user ! BidOnNotification(auction)
-      user ? ListAuctionsRequest must be_==(ListAuctionsResponse(List(auction))).await
+      user ! BidOnNotification(auction(1))
+      user ! BidOnNotification(auction(2))
+      user ? ListAuctionsRequest must be_==(ListAuctionsResponse(List(auction(2),auction(1)))).await
     }
   }
   val user = TestActorRef(new User)
-  val auction = TestActorRef("auction")
+  val auction = (1 to 3).reverse.map(i => TestActorRef(s"auction$i"))
 }
