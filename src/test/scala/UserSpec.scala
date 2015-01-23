@@ -14,5 +14,5 @@ class UserSpec extends ActorSpec {
     }
   }
   val user = TestActorRef(new User)
-  val auction = (1 to 3).reverse.map(i => TestActorRef(s"auction$i"))
+  val auction = (1 to 3).reverse.map(_ => TestProbe().ref)
 }
