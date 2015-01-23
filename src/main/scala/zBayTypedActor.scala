@@ -12,8 +12,8 @@ class zBayTypedActor extends zBay with TypedActor.PreStart {
   import API.Protocol._
 
   var apiActor: ActorRef = _
-  var auctionIds = Stream.from(1).iterator
-  var liveAuctions = Set[Long]()
+  var auctionIds = Stream.from(1).map(AuctionId(_)).iterator
+  var liveAuctions = Set[AuctionId]()
 
   implicit val timeout = Timeout(10, TimeUnit.SECONDS)
   implicit val ec = TypedActor.context.dispatcher
@@ -26,13 +26,13 @@ class zBayTypedActor extends zBay with TypedActor.PreStart {
     val auctionId = auctionIds.next()
     TypedActor.context.actorOf(Props(new Auction(endTime)), "auction" + auctionId)
     liveAuctions = liveAuctions + auctionId
-    auctionId.toLong
+    auctionId
   }
 
-  def placeBid(auctionId: Long, userId: Long, value: BigDecimal) =
+  def placeBid(auctionId: AuctionId, userId: UserId, value: BigDecimal) =
     (apiActor ? BidRequest(auctionId, userId, value)).mapTo[BidStatus]
 
-  def status(auctionId: Long) =
+  def status(auctionId: AuctionId) =
     (apiActor ? StatusRequest(auctionId)).mapTo[AuctionValue]
 
   def find(endTime: DateTime) =

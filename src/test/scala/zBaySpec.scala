@@ -8,7 +8,7 @@ class zBaySpec extends ActorSpec {
   "The zBay" should {
     "be able to handle bids and return an auctions status" in {
       val auctionId = zBay.createAuction(exampleEndTime)
-      result(zBay.placeBid(auctionId, userId = 1, value = 1.00), timeoutDuration)
+      result(zBay.placeBid(auctionId, UserId(1), value = 1.00), timeoutDuration)
       zBay.status(auctionId) must be_==(Sold(1.00)).await
     }
     "be able to query for auctions by date" in {
