@@ -6,13 +6,14 @@ import scala.math.BigDecimal
 trait zBay {
   def createAuction(endTime: DateTime): AuctionId
   def status(auctionId: AuctionId): Future[AuctionValue]
-  def placeBid(auctionId: AuctionId, userId: UserId, value: BigDecimal): Future[BidStatus]
+  def placeBid(auctionId: AuctionId, userId: UserId, value: AuctionValue.Price): Future[BidStatus]
   def find(endTime: DateTime): Future[Set[AuctionId]]
 }
 
 sealed trait AuctionValue
 object AuctionValue {
-  case class Sold(highestBid: BigDecimal) extends AuctionValue
+  type Price = BigDecimal
+  case class Sold(highestBid: Price) extends AuctionValue
   case object NotSold extends AuctionValue
 }
 

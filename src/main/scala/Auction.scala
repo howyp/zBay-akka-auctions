@@ -4,8 +4,6 @@ import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 import DateTime.now
 
-import scala.math.BigDecimal
-
 class Auction(endTime: DateTime) extends Actor with FSM[Auction.Lifecycle, AuctionValue] {
   import Auction.Protocol._
   import Auction.Lifecycle._
@@ -45,12 +43,12 @@ class Auction(endTime: DateTime) extends Actor with FSM[Auction.Lifecycle, Aucti
 object Auction {
   object Protocol {
     case object StatusRequest
-    case class StatusResponse(currentHighestBid: BigDecimal, state: AuctionValue)
+    case class StatusResponse(currentHighestBid: AuctionValue.Price, state: AuctionValue)
 
     case object DetailsRequest
     case class DetailsResponse(endTime: DateTime)
 
-    case class Bid(value: BigDecimal, from: ActorRef)
+    case class Bid(value: AuctionValue.Price, from: ActorRef)
 
     case object EndNotification
   }
