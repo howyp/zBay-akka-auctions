@@ -6,7 +6,6 @@ import akka.util.Timeout
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
-import scala.math.BigDecimal
 
 class API extends Actor {
   import Auction.Protocol.{Bid, DetailsRequest, DetailsResponse}
@@ -36,7 +35,7 @@ class API extends Actor {
 }
 object API {
   object Protocol {
-    case class BidRequest(auctionId: AuctionId, userId: UserId, value: BigDecimal)
+    case class BidRequest(auctionId: AuctionId, userId: UserId, value: AuctionValue.Price)
     case class StatusRequest(auctionId: AuctionId)
     case class QueryRequest(endTime: DateTime, currentAuctions: Set[AuctionId])
     case class QueryResponse(matchingAuctions: Set[AuctionId])

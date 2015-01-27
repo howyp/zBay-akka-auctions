@@ -6,8 +6,6 @@ import akka.routing.FromConfig
 import akka.util.Timeout
 import org.joda.time.DateTime
 
-import scala.math.BigDecimal
-
 class zBayTypedActor extends zBay with TypedActor.PreStart {
   import API.Protocol._
 
@@ -29,12 +27,12 @@ class zBayTypedActor extends zBay with TypedActor.PreStart {
     auctionId
   }
 
-  def placeBid(auctionId: AuctionId, userId: UserId, value: BigDecimal) =
+  def placeBid(auctionId: AuctionId, userId: UserId, value: AuctionValue.Price) =
     (apiActor ? BidRequest(auctionId, userId, value)).mapTo[BidStatus]
 
   def status(auctionId: AuctionId) =
     (apiActor ? StatusRequest(auctionId)).mapTo[AuctionValue]
 
   def find(endTime: DateTime) =
-    (apiActor ? QueryRequest(endTime, liveAuctions)).map { case QueryResponse(ids) => ids }
+    (apiActor ? QueryRequest(endTime, liveAuctions)).mapTo[QueryResponse].map(_.matchingAuctions)
 }
