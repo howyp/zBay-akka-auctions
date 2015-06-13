@@ -29,7 +29,9 @@ Its job is to guard a single piece of mutable state, which is the `currentHighes
 
 ## Step 2: Scheduling - Ending auctions
 
-tag: ex2_scheduler
+tag: https://github.com/howyp/zBay-akka-auctions/tree/ex2_scheduler
+
+compare: https://github.com/howyp/zBay-akka-auctions/compare/ex1_basicActor...ex2_scheduler
 
 An auction that never finishes is not very useful. Most auctions have a finite finish time, so let's add an `endTime` that is passed to the actor when it is created:
 
