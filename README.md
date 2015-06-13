@@ -103,3 +103,28 @@ Like the `Auction` actor, this actors job is to guard a piece of mutable state, 
 The actor expects to get `BidOnNotification` messages to tell it that its user bid on an auction; on receipt it adds the reference to the auction actor to its `auctions` list. 
 
 This list of auctions can be queried by sending a `ListAuctionsRequest`, to which the actor responds with the current list. Note that it is totally thread-safe to share this list as it is immutable.
+
+## Step 5: Actor Selection - Adding an API actor
+
+Source: [ex5_actorSelection](https://github.com/howyp/zBay-akka-auctions/tree/ex5_actorSelection) - [compare with previous step](https://github.com/howyp/zBay-akka-auctions/compare/ex4_actorRef...ex5_actorSelection)
+
+At the moment, we only have two actors, and they exist in isolation. In reality, we'll probably need them to be behind an API of some kind so that they can be looked up by ID. 
+
+```scala
+class API extends Actor {
+  import API.Protocol._
+
+  def receive = {
+    case BidRequest(auctionId, userId, value) =>
+      val userRef = context.actorFor(s"../user$userId")
+      context.actorSelection(s"../auction$auctionId") ! Bid(value, userRef)
+  }
+}
+```
+
+The new actor is essentially a proxy. It receives `BidRequests` which give the IDs of the user and the auction that they are bidding on, and looks them up using their actor names, and sends the auction a `Bid` with the reference to the user.
+
+There are two techniques for doing this:
+
+* `actorFor` finds a single actor. It's used here for demonstration purposes to find the user actor, although [it's actually deprecated](http://doc.akka.io/docs/akka/2.2.3/project/migration-guide-2.1.x-2.2.x.html#use-actorselection-instead-of-actorfor) because it behaves differently for local and remote actors
+* `actorSelection` finds actors matching a given path. It returns an `ActorSelection`, which can receive messages, and forwards them onto the matching actors. 
