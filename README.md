@@ -5,7 +5,7 @@ Example of building an auction-hosting solution using Akka. This aims to show ma
 
 ## Step 1: Basic Actors - Auction as an actor
 
-Source tag: [ex1_basicActor](tree/ex9_fsm)
+Source tag: [ex1_basicActor](/howyp/zBay-akka-auctions/tree/master)
 
 We start with one basic actor, which looks after the status of a single auction:
 
