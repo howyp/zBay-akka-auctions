@@ -5,7 +5,7 @@ Example of building an auction-hosting solution using Akka. This aims to show ma
 
 ## Step 1: Basic Actors - Auction as an actor
 
-Source tag: [ex1_basicActor](/howyp/zBay-akka-auctions/tree/master)
+Source tag: [ex1_basicActor](https://github.com/howyp/zBay-akka-auctions/tree/ex1_basicActor)
 
 We start with one basic actor, which looks after the status of a single auction:
 
@@ -29,9 +29,7 @@ Its job is to guard a single piece of mutable state, which is the `currentHighes
 
 ## Step 2: Scheduling - Ending auctions
 
-tag: https://github.com/howyp/zBay-akka-auctions/tree/ex2_scheduler
-
-compare: https://github.com/howyp/zBay-akka-auctions/compare/ex1_basicActor...ex2_scheduler
+Source: [ex2_scheduler](https://github.com/howyp/zBay-akka-auctions/tree/ex2_scheduler) - [compare with previous step](https://github.com/howyp/zBay-akka-auctions/compare/ex1_basicActor...ex2_scheduler)
 
 An auction that never finishes is not very useful. Most auctions have a finite finish time, so let's add an `endTime` that is passed to the actor when it is created:
 
@@ -60,7 +58,7 @@ Note that the scheduler is only actually accurate to a few hundred milliseconds.
 
 ## Step 3: Behaviours - Ignoring bids after auction ends
 
-tag: ex3_behaviours
+Source: [ex3_behaviours](https://github.com/howyp/zBay-akka-auctions/tree/ex3_behaviours) - [compare with previous step](https://github.com/howyp/zBay-akka-auctions/compare/ex2_scheduler...ex3_behaviours)
 
 A shortcoming of the previous step was that the actor keeps accepting bids after the auction has ended. Let's fix that by dynamically changing the behaviour attached to the `receive` method:
 
@@ -84,7 +82,7 @@ The major difference is that when we receive an `EndNotification`, we change beh
 
 ## Step 4: ActorRefs - Talking to a user actor
 
-tag: ex4_actorRef
+Source: [ex4_actorRef](https://github.com/howyp/zBay-akka-auctions/tree/ex4_actorRef) - [compare with previous step](https://github.com/howyp/zBay-akka-auctions/compare/ex3_behaviours...ex4_actorRef)
 
 It's probable that we need to keep track of which user has bid on which auctions, so that we can show them to the user. To do this, we add another actor:
 
